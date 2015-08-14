@@ -268,6 +268,13 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
+	uint32_t i;
+        uint32_t kstacktop;
+
+	for (i=0; i<NCPU; i++) {
+	    kstacktop = KSTACKTOP - i*(KSTKSIZE + KSTKGAP);
+            boot_map_region(kern_pgdir, kstacktop-KSTKSIZE, KSTKSIZE, PADDR(percpu_kstacks[i]), PTE_W|PTE_P);
+	}
 
 }
 
@@ -307,12 +314,15 @@ page_init(void)
 	// Change the code to reflect this.
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
-	size_t i;
+        extern unsigned char mpentry_start[], mpentry_end[];
 	char * nextfree;
+	size_t i;
 
         nextfree = boot_alloc(0);
 	for (i = 0; i < npages; i++) {
 	        if (i==0)
+		    continue;
+		if (i == PGNUM(MPENTRY_PADDR))
 		    continue;
                 if (i >= PGNUM(IOPHYSMEM) && i < PGNUM(PADDR(ROUNDUP(nextfree, PGSIZE))))
 		    continue;
@@ -602,7 +612,13 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+	//panic("mmio_map_region not implemented");
+	size = ROUNDUP(size, PGSIZE);
+	if (base+size >= MMIOLIM)
+	    panic("mmio_map_region size: %d overflow", size);
+	boot_map_region(kern_pgdir, base, size, pa, PTE_PCD|PTE_PWT|PTE_W);
+	base += size;
+	return (void *)(base-size);
 }
 
 static uintptr_t user_mem_check_addr;
