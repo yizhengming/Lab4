@@ -146,7 +146,7 @@ trap_init_percpu(void)
 	// Setup a TSS so that we get the right stack
 	// when we trap to the kernel.
 	//thiscpu->cpu_ts.ts_esp0 = (uint32_t)percpu_kstacks[thiscpu->cpu_id];
-	thiscpu->cpu_ts.ts_esp0 = ;
+	thiscpu->cpu_ts.ts_esp0 = KSTACKTOP - thiscpu->cpu_id*(KSTKSIZE+KSTKGAP);
 	thiscpu->cpu_ts.ts_ss0 = GD_KD;
 
 	// Initialize the TSS slot of the gdt.
@@ -275,6 +275,7 @@ trap(struct Trapframe *tf)
 		// Acquire the big kernel lock before doing any
 		// serious kernel work.
 		// LAB 4: Your code here.
+		lock_kernel();
 		assert(curenv);
 
 		// Garbage collect if current enviroment is a zombie
@@ -355,6 +356,27 @@ page_fault_handler(struct Trapframe *tf)
 	//   (the 'tf' variable points at 'curenv->env_tf').
 
 	// LAB 4: Your code here.
+	if (curenv->env_pgfault_upcall) {
+		struct UTrapframe *utf;
+
+		if (tf->tf_esp < UXSTACKTOP && tf->tf_esp >= UXSTACKTOP-PGSIZE)
+			utf = (struct UTrapframe *)(tf->tf_esp-sizeof(struct UTrapframe)-4);
+		else
+			utf = (struct UTrapframe *)(UXSTACKTOP - sizeof(struct UTrapframe));
+
+		user_mem_assert(curenv, (void *)utf, sizeof(struct UTrapframe), PTE_W|PTE_P);
+
+		utf->utf_esp = tf->tf_esp;
+		utf->utf_eflags = tf->tf_eflags;
+		utf->utf_eip = tf->tf_eip;
+		utf->utf_regs = tf->tf_regs;
+		utf->utf_err = tf->tf_err;
+		utf->utf_fault_va = fault_va;
+
+		curenv->env_tf.tf_esp = (uintptr_t)utf;
+		curenv->env_tf.tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
+		env_run(curenv);
+	}
 
 	// Destroy the environment that caused the fault.
 	cprintf("[%08x] user fault va %08x ip %08x\n",
