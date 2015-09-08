@@ -31,7 +31,9 @@ sched_yield(void)
 	// LAB 4: Your code here.
 	int i, pos = 0;
 
+        //cprintf("call sched\n");
         //i = (thiscpu->cpu_env - envs) + 1;
+	cprintf("enter sched\n");
 	for (i=0; i<NENV; i++) {
 	    if(&envs[i] == curenv) {
 	        pos = i;
@@ -45,6 +47,21 @@ sched_yield(void)
 	        env_run(env);
 	    }
 	}
+	/*
+	cprintf("call sched\n");
+	struct Env *curenvptr = curenv;
+
+	if (curenv == NULL)
+	    curenvptr = envs;
+
+	int i = 0;
+	for (curenvptr++; i<NENV; i++, curenvptr++) {
+	    if (curenvptr >= envs + NENV)
+	        curenvptr = envs;
+	    if (curenvptr->env_status == ENV_RUNNABLE)
+	        env_run(curenvptr);
+	}
+	*/
 
 	// sched_halt never returns
 	sched_halt();

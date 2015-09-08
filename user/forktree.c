@@ -1,6 +1,7 @@
 // Fork a binary tree of processes and display their structure.
 
 #include <inc/lib.h>
+#include <inc/string.h>
 
 #define DEPTH 3
 
@@ -35,4 +36,3 @@ umain(int argc, char **argv)
 {
 	forktree("");
 }
-

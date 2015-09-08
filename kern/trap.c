@@ -92,6 +92,23 @@ trap_init(void)
 	extern void fun_simderr(); 
 	extern void fun_syscall(); 
 
+	extern void fun_irq0();
+	extern void fun_irq1();
+	extern void fun_irq2();
+	extern void fun_irq3();
+	extern void fun_irq4();
+	extern void fun_irq5();
+	extern void fun_irq6();
+	extern void fun_irq7();
+	extern void fun_irq8();
+	extern void fun_irq9();
+	extern void fun_irq10();
+	extern void fun_irq11();
+	extern void fun_irq12();
+	extern void fun_irq13();
+	extern void fun_irq14();
+	extern void fun_irq15();
+
         SETGATE(idt[T_DIVIDE], 1, GD_KT, fun_divide, 0);
         SETGATE(idt[T_DEBUG], 1, GD_KT, fun_debug, 0);
         SETGATE(idt[T_NMI], 1, GD_KT, fun_nmi, 0);
@@ -111,6 +128,23 @@ trap_init(void)
         SETGATE(idt[T_MCHK], 1, GD_KT, fun_mchk, 0);
         SETGATE(idt[T_SIMDERR], 1, GD_KT, fun_simderr, 0);
         SETGATE(idt[T_SYSCALL], 0, GD_KT, fun_syscall, 3);
+
+        SETGATE(idt[IRQ_OFFSET+0], 0, GD_KT, fun_irq0, 0);
+        SETGATE(idt[IRQ_OFFSET+1], 0, GD_KT, fun_irq1, 0);
+        SETGATE(idt[IRQ_OFFSET+2], 0, GD_KT, fun_irq2, 0);
+        SETGATE(idt[IRQ_OFFSET+3], 0, GD_KT, fun_irq3, 0);
+        SETGATE(idt[IRQ_OFFSET+4], 0, GD_KT, fun_irq4, 0);
+        SETGATE(idt[IRQ_OFFSET+5], 0, GD_KT, fun_irq5, 0);
+        SETGATE(idt[IRQ_OFFSET+6], 0, GD_KT, fun_irq6, 0);
+        SETGATE(idt[IRQ_OFFSET+7], 0, GD_KT, fun_irq7, 0);
+        SETGATE(idt[IRQ_OFFSET+8], 0, GD_KT, fun_irq8, 0);
+        SETGATE(idt[IRQ_OFFSET+9], 0, GD_KT, fun_irq9, 0);
+        SETGATE(idt[IRQ_OFFSET+10], 0, GD_KT, fun_irq10, 0);
+        SETGATE(idt[IRQ_OFFSET+11], 0, GD_KT, fun_irq11, 0);
+        SETGATE(idt[IRQ_OFFSET+12], 0, GD_KT, fun_irq12, 0);
+        SETGATE(idt[IRQ_OFFSET+13], 0, GD_KT, fun_irq13, 0);
+        SETGATE(idt[IRQ_OFFSET+14], 0, GD_KT, fun_irq14, 0);
+        SETGATE(idt[IRQ_OFFSET+15], 0, GD_KT, fun_irq15, 0);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -223,6 +257,11 @@ trap_dispatch(struct Trapframe *tf)
 	case T_SYSCALL:
 	    tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx, tf->tf_regs.reg_ecx,
 	            tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, tf->tf_regs.reg_esi);
+            return;
+	case IRQ_OFFSET+IRQ_TIMER:
+	    cprintf("debug start IRQ_TIMER\n");
+	    sched_yield();
+	    cprintf("debug end IRQ_TIMER\n");
 	    return;
 	}
 

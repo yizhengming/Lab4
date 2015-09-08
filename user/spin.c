@@ -1,7 +1,7 @@
 // Test preemption by forking off a child process that just spins forever.
 // Let it run for a couple time slices, then kill it.
-
 #include <inc/lib.h>
+#include <inc/string.h>
 
 void
 umain(int argc, char **argv)
@@ -12,7 +12,7 @@ umain(int argc, char **argv)
 	if ((env = fork()) == 0) {
 		cprintf("I am the child.  Spinning...\n");
 		while (1)
-			/* do nothing */;
+			 /*do nothing*/;
 	}
 
 	cprintf("I am the parent.  Running the child...\n");
